@@ -40,7 +40,17 @@ likeAppleオプションがtrueの場合、Focus時点でplaceholderが消える
 
 これは、iOSのMobile Safariや、Safari5.1以降のplaceholderの動作を再現したものです。
 
+###enableValHooksオプション
+
+enableValHooksオプションがtrueで、なおかつvalHooksに対応したjQuery 1.6以上で使用する場合、$(要素).val()にフックが入り、
+プレースホルダー状態なら空文字列を返す、値をセットするときには自動で色を元に戻すなどを行うようになります。
+
+このオプションはデフォルトでtrueとなっています。他のプラグインでもvalHooksを使っていて、そちらと干渉する場合など、
+どうしても必要な場合に限りfalseとすることをおすすめします（なお、valHooks非対応のjQueryと併用する場合、falseでもtrueでも特に動作に変化はありません）。
+
 ##変更履歴 - Change log
+1.21
+:  enableValHooksオプションを追加
 
 1.2
 :  placeholderAttrオプションを追加
@@ -50,4 +60,4 @@ likeAppleオプションがtrueの場合、Focus時点でplaceholderが消える
 
 ##クレジット - Credit
 
-Copyright 2011, Ayumu Sato ( http://havelog.ayumusato.com )
+Copyright 2011, Ayumu Sato ( http://havelog.ayumusato.com ), 2013, jkr2255 (http://twitter.com/jkr_2255)

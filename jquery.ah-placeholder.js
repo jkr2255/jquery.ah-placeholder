@@ -1,10 +1,11 @@
 /*
- * jQuery ah-placeholder plugin 1.2
+ * jQuery ah-placeholder plugin 1.2.1
  *
  * https://github.com/ahomu/jquery.ah-placeholder
  * http://havelog.ayumusato.com/develop/javascript/e189-jquery-plugin-placeholder.html
  *
- * Copyright (c) 2011 Ayumu Sato ( http://havelog.ayumusato.com )
+ * Copyright (c) 2011 Ayumu Sato ( http://havelog.ayumusato.com ),
+ * 2013 jkr2255 (http://twitter.com/jkr_2255)
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
@@ -18,7 +19,8 @@ $.fn.ahPlaceholder = function(options)
     var defaults = {
             placeholderColor : 'silver',
             placeholderAttr  : 'title',
-            likeApple        : false
+            likeApple        : false ,
+            enableValHooks   : true
         },
         settings = $.extend({}, defaults, options);
 
@@ -59,7 +61,8 @@ $.fn.ahPlaceholder = function(options)
             } else if ( document.layers ) {
                 return function(e){return e.which;};
             }
-        })();
+        })(),
+        storedHooks = {};
 
     // method
     var init    = function()
@@ -74,7 +77,8 @@ $.fn.ahPlaceholder = function(options)
 
             var phString    = $.data(this, 'placeholder-string'),
                 self        = this,
-                $self       = $(this);
+                $self       = $(this),
+                type;
 
             if ( self.value === '' ) {
                 self.value = phString;
@@ -97,6 +101,13 @@ $.fn.ahPlaceholder = function(options)
                 }
                 return true;
             });
+            if ($.valHooks && settings.enableValHooks) {
+            	type = this.tagName.toLowerCase();
+            	if (type === 'input') {
+            		type = this.type || 'input';
+            	}
+            	_makeHook(type);
+            }
         },
         onKeydown = function(e)
         {
@@ -155,6 +166,45 @@ $.fn.ahPlaceholder = function(options)
         {
             self.value = '';
             $(self).css('color', $.data(self, 'placeholder-color'));
+        },
+        _makeHook = function(type)
+        {
+        	var getter, setter;
+        	// フック済み or フック非対応
+        	if (type in storedHooks || (!$.valHooks)) {
+        		return;
+        	}
+        	if (type in $.valHooks) {
+        		//たとえすでにフック済みでも、フラグ代わりに入れておく
+        		storedHooks[type] = {get: $.valHooks[type].get || $.noop, set: $.valHooks[type].set || $.noop};
+        		if (ahHook in storedHooks[type].get) {
+        			return;
+        		}
+        	} else {
+        		//undefinedを返すことで、jQuery内のデフォルト処理につなげる
+        		storedHooks[type] = {get: $.noop, set: $.noop};
+        	}
+        	getter = function(elem)
+        	{
+        		if ( elem.value === $.data(elem, 'placeholder-string') ) {
+        			return '';
+        		}
+        		return storedHooks[type].get(elem);
+        	};
+        	setter = function(elem, val)
+        	{
+        		if (val === '') {
+        			_setPlaceholder(elem);
+        			//処理完了を伝える
+        			return true;
+        		} else {
+        			_clearPlaceholder(elem);
+        			return storedHooks[type].set(elem, val);
+        		}
+        	};
+        	//重複フックしないように
+        	getter.ahHook = true;
+        	$.valHooks[type]={get: getter, set: setter};
         };
     // construct
     this.each(function()
